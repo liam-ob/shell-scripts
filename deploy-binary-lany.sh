@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Script to deploy a python program on a binary lane instance
 
@@ -40,3 +41,33 @@ sudo poetry config virtualenvs.in-project true
 # Repeat becasue sometimes it doesnt work?
 poetry config virtualenvs.create false
 poetry config virtualenvs.in-project true
+
+
+# Configure fail2ban
+echo "Configuring fail2ban for SSH..."
+sudo apt install fail2ban
+
+# Configure fail2ban for SSH
+sudo cat <<EOL > "/etc/fail2ban/jail.local"
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 604800
+EOL
+
+# Confirm the file has been created
+if [ -f "/etc/fail2ban/jail.local" ]; then
+    echo "File created successfully at $FILE"
+else
+    echo "Failed to create the file"
+fi
+
+# Restart fail2ban
+echo "Restarting fail2ban..."
+sudo systemctl restart fail2ban
+
+echo "You can check the status of the SSH jail with: sudo fail2ban-client status sshd"
+
